@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'Java-17'   // must match Jenkins tool name
+        jdk 'Java-17'       // must match Jenkins tool name
         maven 'Maven-3.9.11'
     }
 
@@ -57,6 +57,9 @@ pipeline {
                             passwordVariable: 'GIT_TOKEN')]) {
 
                             bat """
+                                REM Mark this directory as safe for SYSTEM user
+                                git config --global --add safe.directory ${GIT_WORKSPACE}
+
                                 git config user.email "likhithkumarv788@gmail.com"
                                 git config user.name "likhi-th123"
 
