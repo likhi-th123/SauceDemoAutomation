@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'Java-17'   //must match
+        jdk 'Java-17'   // must match Jenkins tool name
         maven 'Maven-3.9.11'
     }
 
@@ -18,6 +18,12 @@ pipeline {
     }
 
     stages {
+        stage('Check Git Installation') {
+            steps {
+                bat 'git --version'
+            }
+        }
+
         stage('Checkout from Git') {
             steps {
                 git branch: "${env.BRANCH_NAME}",
@@ -58,11 +64,15 @@ pipeline {
                                 git add --all
                                 git add --renormalize .
 
-                                REM Commit only if there are changes
-                                git diff --cached --quiet || git commit -m "${COMMIT_MESSAGE}" || echo "No changes to commit"
-
-                                REM Push changes using Jenkins credentials
-                                git push https://%GIT_USER%:%GIT_TOKEN%@github.com/likhi-th123/SauceDemoAutomation.git HEAD:${BRANCH_NAME}
+                                REM Commit & Push only if there are changes
+                                git diff --cached --quiet
+                                IF %ERRORLEVEL% NEQ 0 (
+                                    echo "Changes detected, committing..."
+                                    git commit -m "${COMMIT_MESSAGE}"
+                                    git push https://%GIT_USER%:%GIT_TOKEN%@github.com/likhi-th123/SauceDemoAutomation.git HEAD:${BRANCH_NAME}
+                                ) ELSE (
+                                    echo "No changes to commit, skipping push"
+                                )
                             """
                         }
                     }
@@ -73,7 +83,6 @@ pipeline {
 
     post {
         always {
-            // Only keep TestNG Dashboard
             publishHTML([
                 allowMissing: true,
                 alwaysLinkToLastBuild: true,
